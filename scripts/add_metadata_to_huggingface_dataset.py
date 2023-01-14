@@ -8,7 +8,7 @@ def get_youtube_metadata(channel_id=os.environ.get('LEX_FRIDMAN_POD_CHANNEL_ID')
     api_key = os.environ.get('YOUTUBE_API_KEY')
 
     # Create service object
-    youtube = build('youtube', 'v3', developerKey="AIzaSyCtQDlQiN8NyW_d4i1ulRflAJ2OIEEaSXw")
+    youtube = build('youtube', 'v3', developerKey=api_key)
 
         # Retrieve channel metadata
     response = youtube.search().list(
