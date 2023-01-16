@@ -6,6 +6,7 @@ from datasets import load_dataset
 
 # Use GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device {device}")
 
 model = whisper.load_model("base").to(device)
 
@@ -37,7 +38,7 @@ def transcribe_audio_and_save(paths):
                     "start": segment["start"],
                     "end": segment["end"]
                 }
-            }
+            },
             data.append(meta)
         
         with open("dataset/lex_fridman_pod_transcriptions.json", "w", encoding="utf-8") as fp:
