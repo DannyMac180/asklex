@@ -21,35 +21,32 @@ episode_metadata["guid"] = episode_metadata["guid"].apply(lambda x: x.replace("h
 
 def transcribe_audio_and_save(paths):
     data = []
-    for path in paths:
+    for idx, path in enumerate(paths):
         # Get _id by splitting path and removing .mp3 extension
         _id = path.replace(".mp3", "").split("/")[-1]
         # Transcribe audio file
-        print(f"Transcribing {_id}")
+        print(f"Transcribing {_id}, episode {idx+1} of {len(paths)}")
         transcription = model.transcribe(path)
         segments = transcription["segments"]
         # Get the metadata for the episode with _id
         episode_meta = episode_metadata[episode_metadata["guid"] == _id]
 
         for segment in segments:
+            # Create a JSON oject with the episode_id, title, pub_date, segment_start, segment_end, and text
             meta = {
                 "episode_id": _id,
-                "title": episode_meta["title"],
-                "pub_date": episode_meta["pub_date"],
-                **{
-                    "segment_id": f"{_id}_{segment['start']}",
-                    "text": segment["text"].strip(),
-                    "start": segment["start"],
-                    "end": segment["end"]
-                }
+                "title": episode_meta["title"].values[0],
+                "pub_date": episode_meta["pub_date"].values[0],
+                "segment_start": segment["start"],
+                "segment_end": segment["end"],
+                "text": segment["text"]
             }
-            print(meta)
             data.append(meta)
         
-        with open("dataset/lex_fridman_pod_transcriptions.json", "w", encoding="utf-8") as fp:
-            for line in data:
-                json.dump(line, fp)
-                fp.write("\n")
+    with open("dataset/lex_fridman_pod_transcriptions.json", "w", encoding="utf-8") as fp:
+        for line in data:
+            json.dump(line, fp)
+            fp.write("\n")    
 
 
 transcribe_audio_and_save(paths)
