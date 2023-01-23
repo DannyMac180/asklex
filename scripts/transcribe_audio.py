@@ -40,13 +40,13 @@ def transcribe_audio_and_save(paths):
                 "segment_start": segment["start"],
                 "segment_end": segment["end"],
                 "text": segment["text"]
-            }
+            },
             data.append(meta)
         
-    with open("dataset/lex_fridman_pod_transcriptions.json", "w", encoding="utf-8") as fp:
-        for line in data:
-            json.dump(line, fp)
-            fp.write("\n")    
+            with open("dataset/lex_fridman_pod_transcriptions_2.json", "w", encoding="utf-8") as fp:
+                for line in data:
+                    json.dump(line, fp)
+                    fp.write("\n")
 
 
 transcribe_audio_and_save(paths)
