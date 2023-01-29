@@ -18,18 +18,15 @@ def convert_to_json(file_path, new_file_path='dataset/lex_fridman_pod_transcript
     # Load the file contents into a Python object
     data = json.loads(file_contents)
 
-    # Convert the Python object to a JSON string
-    json_string = json.dumps(data)
-    
-    # Open a new file in write mode
-    with open(new_file_path, 'w') as f:
-        # Write the JSON string to the file
-        f.write(json_string)
-    
+    # Write the data as newline delimited JSON
+    with open(new_file_path, "w") as ndjson_file:
+        for item in data:
+            ndjson_file.write(json.dumps(item) + "\n")
+
     return 'File saved successfully'
 
-
-print(convert_to_json('dataset/lex_fridman_pod_transcriptions_2 copy.txt'))
+# Convert the file to a valid JSON file
+convert_to_json('dataset/lex_fridman_pod_transcriptions_2 copy.txt')
 
 # Iterate through first 10 elements in 'lex_fridman_pod_transcriptions_2.json'
 for i in range(10):
