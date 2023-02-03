@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 from google.cloud import bigquery
 import pandas as pd
 from dotenv import load_dotenv
+import pine
 
 load_dotenv()
 
@@ -39,6 +40,8 @@ def create_embeddings(segments):
         engine=MODEL
     )
 
-    print(embeddings)
-    
+    # Put embeddings into a list
+    embeddings = embeddings["data"]
+    print(len(embeddings))
+
 create_embeddings(get_segments_from_bq())
