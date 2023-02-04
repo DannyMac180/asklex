@@ -59,14 +59,14 @@ def save_embeddings_to_pinecone(embeddings, segments_df):
     # Create a Pinecone index
     # check if 'openai' index already exists (only create index if not)
     if 'asklex-embeddings' not in pinecone.list_indexes():
-        pinecone.create_index('asklex-embeddings', dimension=len(embeddings))
+        pinecone.create_index('asklex-embeddings', dimension=len(embeddings[0]['embedding']))
     # connect to index
-    index = pinecone.Index('asklex_embeddings')
+    index = pinecone.Index('asklex-embeddings')
 
     metadata = []
     for i, embedding in tqdm(enumerate(embeddings)):
         meta = {
-            "id": int(i),
+            "id": str(i),
             "title": segments_df["title"].iloc[i],
             "episode_id": segments_df["episode_id"].iloc[i],
             "segment_start": segments_df["segment_start"].iloc[i],
@@ -75,9 +75,11 @@ def save_embeddings_to_pinecone(embeddings, segments_df):
         }
         metadata.append(meta)
     
+    ids = [meta['id'] for meta in metadata]
+    
     embeds = [embedding['embedding'] for embedding in embeddings]
 
-    to_upsert = zip(embeds, metadata)
+    to_upsert = zip(ids, embeds, metadata)
     index.upsert(vectors=list(to_upsert))
 
 def main():
