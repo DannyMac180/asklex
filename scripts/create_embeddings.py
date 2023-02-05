@@ -6,9 +6,9 @@ import pandas as pd
 from dotenv import load_dotenv
 import pinecone
 from tqdm.auto import tqdm
+import time
 
 load_dotenv()
-
 
 def get_segments_from_bq():
     # Load the service account key JSON file.
@@ -20,7 +20,7 @@ def get_segments_from_bq():
         credentials=credentials, project=credentials.project_id)
 
     sql = """
-        SELECT * FROM asklex.lexfridman_pod_transcriptions LIMIT 10
+        SELECT * FROM asklex.lexfridman_pod_transcriptions
     """
 
     # Make an API request.
@@ -39,14 +39,23 @@ def create_embeddings(segments):
 
     MODEL = "text-embedding-ada-002"
 
-    # Create embeddings
-    embeddings = openai.Embedding.create(
-        input=segments["text"].tolist(),
-        engine=MODEL
-    )
+    batch_size = 1000
+    embeddings = []
+    for i in tqdm(range(0, len(segments), batch_size)):
+        # Create embeddings
+        try:
+            embeddings_batch = openai.Embedding.create(
+                input=segments["text"].iloc[i:i+batch_size].tolist(),
+                engine=MODEL
+            )
+            time.sleep(2)
+        except Exception as e:
+            print(e)
 
-    # Put embeddings into a list
-    embeddings = embeddings["data"]
+        # Put batch of embeddings into a list
+        embeddings_batch = embeddings_batch["data"]
+        embeddings.extend(embeddings_batch)
+
     return embeddings
 
 def save_embeddings_to_pinecone(embeddings, segments_df):
@@ -63,6 +72,8 @@ def save_embeddings_to_pinecone(embeddings, segments_df):
     # connect to index
     index = pinecone.Index('asklex-embeddings')
 
+    # Wrap the below code in a function that performs the process in batches of 100
+    batch_size = 100
     metadata = []
     for i, embedding in tqdm(enumerate(embeddings)):
         meta = {
@@ -80,7 +91,9 @@ def save_embeddings_to_pinecone(embeddings, segments_df):
     embeds = [embedding['embedding'] for embedding in embeddings]
 
     to_upsert = zip(ids, embeds, metadata)
-    index.upsert(vectors=list(to_upsert))
+    
+    for i in range(0, len(to_upsert), batch_size):
+        index.upsert(vectors=list(to_upsert[i:i+batch_size]))
 
 def main():
     segments_df = get_segments_from_bq()
