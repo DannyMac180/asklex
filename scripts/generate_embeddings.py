@@ -47,26 +47,16 @@ def create_embeddings(segments):
                 input=segments["text"].iloc[i:i+batch_size].tolist(),
                 engine=MODEL
             )
+            # Save batch of embeddings to JSON file
+            with open('dataset/embeds_batches/embeds_batch_{idx}.json'.format(i), 'w') as f:
+                json.dump(embeddings_batch["data"], f)
             time.sleep(2)
         except Exception as e:
             print(e)
 
-        # Put batch of embeddings into a list
-        embeddings_batch = embeddings_batch["data"]
-
-        # Save embeddings to JSON file
-        with open('embeddings.json', 'w') as f:
-            json.dump(embeddings_batch, f)
-
 def main():
     segments_df = get_segments_from_bq()
-
-    # Do half the segments, then the other half
-    first_half = segments_df.iloc[:len(segments_df)//2]
-    second_half = segments_df.iloc[len(segments_df)//2:]
-
-    embeddings = create_embeddings(first_half)
-    embeddings = create_embeddings(second_half)
+    create_embeddings(segments_df)
 
 if __name__ == "__main__":
     main()
