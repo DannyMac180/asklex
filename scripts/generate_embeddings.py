@@ -31,8 +31,22 @@ def get_segments_from_bq():
 
     return query_results_df
 
-
 def create_embeddings(segments):
+    batch_start_idx = 0
+    metadata = []
+    for i in range(len(segments)):
+        meta = {
+            "episode_id": segments["episode_id"].iloc[i],
+            "title": segments["title"].iloc[i],
+            "pub_date": segments["pub_date"].iloc[i],
+            "segment_start": segments["segment_start"].iloc[i],
+            "segment_end": segments["segment_end"].iloc[i],
+            "text": segments["text"].iloc[i]
+        }
+        metadata.append(meta)
+
+    ids = [str(i) for i in range(len(segments))]
+
     # Use openai module to create embeddings
     openai.organization = os.getenv("OPENAI_ORG_ID")
     openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -55,7 +69,8 @@ def create_embeddings(segments):
 
             # check if 'openai' index already exists (only create index if not)
             if 'asklex' not in pinecone.list_indexes():
-                pinecone.create_index('asklex', dimension=len(embeddings_batch["data"][0]))
+                pinecone.create_index('asklex', dimension=len(embeddings_batch["data"][0]["embedding"]))
+            
             # connect to index
             index = pinecone.Index('asklex')
 
@@ -64,9 +79,26 @@ def create_embeddings(segments):
 
             # Upsert the embeddings into the index in batches of 100
             pinecone_batch_size = 100
+            pinecone_batch_start_idx = 0 + batch_start_idx
             for i in range(0, len(embeds), pinecone_batch_size):
-                index.upsert(embeds[i:i+pinecone_batch_size], segments.iloc[i:i+pinecone_batch_size].to_dict("records"))
+                # Get a batch of ids
+                batch_ids = ids[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
 
+                # Get a batch of embeddings
+                batch_embeds = embeds[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
+
+                # Get a batch of metadata
+                batch_metadata = metadata[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
+
+                # Zip the ids, embeddings, and metadata
+                to_upsert = zip(batch_ids, batch_embeds, batch_metadata)
+
+                # Upsert the batch
+                index.upsert(vectors=list(to_upsert))
+
+                pinecone_batch_start_idx += pinecone_batch_size
+
+            batch_start_idx += batch_size    
             time.sleep(2)
         except Exception as e:
             print(e)
