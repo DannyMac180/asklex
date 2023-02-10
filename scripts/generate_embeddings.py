@@ -6,7 +6,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from tqdm.auto import tqdm
 import time
-import json
+import pinecone
 
 load_dotenv()
 
@@ -47,9 +47,26 @@ def create_embeddings(segments):
                 input=segments["text"].iloc[i:i+batch_size].tolist(),
                 engine=MODEL
             )
-            # Save batch of embeddings to JSON file
-            with open('dataset/embeds_batches/embeds_batch_{idx}.json'.format(i), 'w') as f:
-                json.dump(embeddings_batch["data"], f)
+            # Create pinecone index
+            pinecone.init(
+                api_key=os.getenv("PINECONE_API_KEY"),
+                environment=os.getenv("PINECONE_ENV")
+            )
+
+            # check if 'openai' index already exists (only create index if not)
+            if 'asklex' not in pinecone.list_indexes():
+                pinecone.create_index('asklex', dimension=len(embeddings_batch["data"][0]))
+            # connect to index
+            index = pinecone.Index('asklex')
+
+            # Comprehend the embeddings into an array
+            embeds = [embedding["embedding"] for embedding in embeddings_batch["data"]]
+
+            # Upsert the embeddings into the index in batches of 100
+            pinecone_batch_size = 100
+            for i in range(0, len(embeds), pinecone_batch_size):
+                index.upsert(embeds[i:i+pinecone_batch_size], segments.iloc[i:i+pinecone_batch_size].to_dict("records"))
+
             time.sleep(2)
         except Exception as e:
             print(e)
