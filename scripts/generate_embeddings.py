@@ -79,7 +79,7 @@ def create_embeddings(segments):
 
             # Upsert the embeddings into the index in batches of 100
             pinecone_batch_size = 100
-            pinecone_batch_start_idx = 0 + batch_start_idx
+            pinecone_batch_start_idx += batch_start_idx
             for i in range(0, len(embeds), pinecone_batch_size):
                 # Get a batch of ids
                 batch_ids = ids[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
