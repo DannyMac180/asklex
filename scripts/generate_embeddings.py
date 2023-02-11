@@ -45,7 +45,7 @@ def create_embeddings(segments):
         }
         metadata.append(meta)
 
-    ids = [str(i) for i in range(len(segments))]
+    ids = [str(i+1) for i in range(len(segments))]
 
     # Use openai module to create embeddings
     openai.organization = os.getenv("OPENAI_ORG_ID")
@@ -79,16 +79,17 @@ def create_embeddings(segments):
 
             # Upsert the embeddings into the index in batches of 100
             pinecone_batch_size = 100
-            pinecone_batch_start_idx += batch_start_idx
+            pinecone_batch_start_idx = 0
             for i in range(0, len(embeds), pinecone_batch_size):
+                current_batch_start_idx = pinecone_batch_start_idx + batch_start_idx
                 # Get a batch of ids
-                batch_ids = ids[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
+                batch_ids = ids[current_batch_start_idx:current_batch_start_idx+pinecone_batch_size]
 
                 # Get a batch of embeddings
                 batch_embeds = embeds[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
 
                 # Get a batch of metadata
-                batch_metadata = metadata[pinecone_batch_start_idx:pinecone_batch_start_idx+pinecone_batch_size]
+                batch_metadata = metadata[current_batch_start_idx:current_batch_start_idx+pinecone_batch_size]
 
                 # Zip the ids, embeddings, and metadata
                 to_upsert = zip(batch_ids, batch_embeds, batch_metadata)
