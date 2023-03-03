@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Search Lex Fridman Podcast</title>
+  </head>
+  <body>
+    <h1>Search Lex Fridman Podcast</h1>
+    <form action="/" method="post">
+      <label for="query">Enter search query:</label>
+      <input type="text" name="query" id="query">
+      <input type="submit" value="Search">
+    </form>
+    <hr>
+    {% if results %}
+      {% for result in results %}
+        <pre>{{ result }}</pre>
+      {% endfor %}
+    {% endif %}
+  </body>
+</html>
