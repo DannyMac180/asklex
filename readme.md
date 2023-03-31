@@ -3,4 +3,4 @@ from it and allow the user to do semantic search over the podcast content.
 
 I found recently this app called [Lex GPT](https://lex-gpt.fly.dev/) which does a great job.
 
-I'll put this one on the self now and go start building something else.
+I'll put this one on the self now and go start building something else, but leaving up on GitHub for posterity.
